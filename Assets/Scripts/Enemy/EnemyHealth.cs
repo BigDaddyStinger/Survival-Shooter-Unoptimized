@@ -1,32 +1,28 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public int startingHealth = 100;
+    public EnemySharedData shared;
+    public string poolKey;
     public int currentHealth;
     public float sinkSpeed = 2.5f;
-    public int scoreValue = 10;
-    public AudioClip deathClip;
-
-
+    bool isDead, isSinking;
     Animator anim;
     AudioSource enemyAudio;
     ParticleSystem hitParticles;
     CapsuleCollider capsuleCollider;
-    bool isDead;
-    bool isSinking;
-
-
-    void Awake ()
+    void Awake()
     {
-        anim = GetComponent <Animator> ();
-        enemyAudio = GetComponent <AudioSource> ();
-        hitParticles = GetComponentInChildren <ParticleSystem> ();
-        capsuleCollider = GetComponent <CapsuleCollider> ();
+        currentHealth = shared.startingHealth;
+        enemyAudio = GetComponent<AudioSource>();
+        anim = GetComponent<Animator>();
+        hitParticles = GetComponentInChildren<ParticleSystem>();
+        capsuleCollider = GetComponent<CapsuleCollider>();
 
-        currentHealth = startingHealth;
+        var rend = GetComponentInChildren<Renderer>();
+        if (rend && shared.skin) rend.sharedMaterial = shared.skin;
     }
-
 
     void Update ()
     {
@@ -35,7 +31,6 @@ public class EnemyHealth : MonoBehaviour
             transform.Translate (-Vector3.up * sinkSpeed * Time.deltaTime);
         }
     }
-
 
     public void TakeDamage (int amount, Vector3 hitPoint)
     {
@@ -55,7 +50,6 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-
     void Death ()
     {
         isDead = true;
@@ -64,17 +58,27 @@ public class EnemyHealth : MonoBehaviour
 
         anim.SetTrigger ("Dead");
 
-        enemyAudio.clip = deathClip;
         enemyAudio.Play ();
     }
 
-
-    public void StartSinking ()
+    public void StartSinking()
     {
-        GetComponent <UnityEngine.AI.NavMeshAgent> ().enabled = false;
-        GetComponent <Rigidbody> ().isKinematic = true;
+        GetComponent<UnityEngine.AI.NavMeshAgent>().enabled = false;
+        GetComponent<Rigidbody>().isKinematic = true;
         isSinking = true;
-        ScoreManager.score += scoreValue;
-        Destroy (gameObject, 2f);
+        //ScoreManager.AddScore(scoreValue);
+        Invoke(nameof(Despawn), 2f);
+    }
+
+    private void Despawn()
+    {
+        if (PoolManager.I != null && !string.IsNullOrEmpty(poolKey))
+        {
+            PoolManager.I.Despawn(poolKey, gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }

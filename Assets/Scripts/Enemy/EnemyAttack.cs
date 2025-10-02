@@ -6,14 +6,12 @@ public class EnemyAttack : MonoBehaviour
     public float timeBetweenAttacks = 0.5f;
     public int attackDamage = 10;
 
-
     Animator anim;
     GameObject player;
     PlayerHealth playerHealth;
     EnemyHealth enemyHealth;
     bool playerInRange;
     float timer;
-
 
     void Awake ()
     {
@@ -23,7 +21,6 @@ public class EnemyAttack : MonoBehaviour
         anim = GetComponent <Animator> ();
     }
 
-
     void OnTriggerEnter (Collider other)
     {
         if(other.gameObject == player)
@@ -32,7 +29,6 @@ public class EnemyAttack : MonoBehaviour
         }
     }
 
-
     void OnTriggerExit (Collider other)
     {
         if(other.gameObject == player)
@@ -40,7 +36,6 @@ public class EnemyAttack : MonoBehaviour
             playerInRange = false;
         }
     }
-
 
     void Update ()
     {
@@ -56,7 +51,6 @@ public class EnemyAttack : MonoBehaviour
             anim.SetTrigger ("PlayerDead");
         }
     }
-
 
     void Attack ()
     {

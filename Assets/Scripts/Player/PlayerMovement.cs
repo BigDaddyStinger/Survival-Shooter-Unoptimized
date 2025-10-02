@@ -1,58 +1,66 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-	public float speed = 6f;
+    public float speed = 6f;
+    public InputActionReference moveAction; // Vector2
+    public InputActionReference lookAction; // Vector2 (mouse)
+    private Vector3 movement;
+    private Animator anim;
+    private Rigidbody rb;
+    private int isWalkingHash = Animator.StringToHash("IsWalking");
+    private Camera cam;
 
-	private Vector3 movement;
-	private Animator anim;
-	private Rigidbody playerRigidbody;
-	private int floorMask;
-	private float camRayLength = 100f;
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        anim = GetComponent<Animator>();
+        cam = Camera.main;
+    }
 
-	void Awake()
-	{
-		floorMask = LayerMask.GetMask("Floor");
-		anim = GetComponent<Animator>();
-		playerRigidbody = GetComponent<Rigidbody>();
-	}
+    void OnEnable()
+    {
+        moveAction.action.Enable();
+        lookAction.action.Enable();
 
-	void FixedUpdate()
-	{
-		float h = Input.GetAxisRaw("Horizontal");
-		float v = Input.GetAxisRaw("Vertical");
+        moveAction.action.performed += OnMove;
+        moveAction.action.canceled += OnMove;
+    }
 
-		Move(h, v);
-		Turning();
-		Animating(h, v);
-	}
+    void OnDisable()
+    {
+        moveAction.action.performed -= OnMove;
+        moveAction.action.canceled -= OnMove;
 
-	void Move(float h, float v)
-	{
-		movement.Set(h, 0f, v);
-		movement = movement.normalized * speed * Time.deltaTime;
+        moveAction.action.Disable();
+        lookAction.action.Disable();
+    }
 
-		playerRigidbody.MovePosition(transform.position + movement);
-	}
+    private void OnMove(InputAction.CallbackContext ctx)
+    {
+        Vector2 v = ctx.ReadValue<Vector2>();
+        movement = new Vector3(v.x, 0f, v.y);
+        anim.SetBool(isWalkingHash, movement.sqrMagnitude > 0.001f);
+    }
 
-	void Turning()
-	{
-		Ray camRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-		RaycastHit floorHit;
+    void FixedUpdate()
+    {
+        Vector3 targetPos = rb.position + movement.normalized * speed * Time.fixedDeltaTime;
+        rb.MovePosition(targetPos);
 
-		if (Physics.Raycast(camRay, out floorHit, camRayLength, floorMask)) {
-			Vector3 playerToMouse = floorHit.point - transform.position;
-			playerToMouse.y = 0f;
-
-			Quaternion newRotation = Quaternion.LookRotation(playerToMouse);
-			playerRigidbody.MoveRotation(newRotation);
-		}
-	}
-
-	void Animating(float h, float v)
-	{
-		bool walking = h != 0f || v != 0f;
-
-		anim.SetBool("IsWalking", walking);
-	}
+        // Face mouse cursor (top-down)
+        Vector2 mouse = lookAction.action.ReadValue<Vector2>();
+        if (cam != null)
+        {
+            Ray ray = cam.ScreenPointToRay(mouse);
+            if (new Plane(Vector3.up, Vector3.zero).Raycast(ray, out float dist))
+            {
+                Vector3 point = ray.GetPoint(dist);
+                Vector3 dir = point - rb.position; dir.y = 0f;
+                if (dir.sqrMagnitude > 0.001f)
+                    rb.MoveRotation(Quaternion.LookRotation(dir));
+            }
+        }
+    }
 }

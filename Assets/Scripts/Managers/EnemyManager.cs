@@ -3,31 +3,17 @@
 public class EnemyManager : MonoBehaviour
 {
     public PlayerHealth playerHealth;
-    public GameObject enemy;
+    public string enemyPoolKey = "Enemy";
     public float spawnTime = 3f;
     public Transform[] spawnPoints;
 
+    void Start() => InvokeRepeating(nameof(Spawn), spawnTime, spawnTime);
 
-    void Start ()
+    void Spawn()
     {
-        InvokeRepeating ("Spawn", spawnTime, spawnTime);
-    }
-
-    void Update()
-    {
-
-    }
-
-
-    void Spawn ()
-    {
-        if(playerHealth.currentHealth <= 0f)
-        {
-            return;
-        }
-
-        int spawnPointIndex = Random.Range (0, spawnPoints.Length);
-
-        Instantiate (enemy, spawnPoints[spawnPointIndex].position, spawnPoints[spawnPointIndex].rotation);
+        if (playerHealth.currentHealth <= 0f) return;
+        int i = Random.Range(0, spawnPoints.Length);
+        var sp = spawnPoints[i];
+        PoolManager.I.Spawn(enemyPoolKey, sp.position, sp.rotation);
     }
 }

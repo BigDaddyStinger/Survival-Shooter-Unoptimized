@@ -6,28 +6,28 @@ using UnityEngine.SceneManagement;
 public class PauseMenu : MonoBehaviour
 {
     [SerializeField] GameObject settingsMenu;
-    // Start is called before the first frame update
+
     void Start()
     {
         Time.timeScale = 0;
     }
 
-    public void ResumeGame() // called when resume button is clicked
+    public void ResumeGame()
     {
         SceneManager.UnloadSceneAsync("Pause");
     }
 
-    public void OpenSettings() // called when settings button is clicked
+    public void OpenSettings()
     {
         settingsMenu.SetActive(true);
     }
 
-    public void QuitGame() // called when quit buttin is clicked
+    public void QuitGame()
     {
         Application.Quit();
     }
 
-    private void OnDestroy() // called when unpaused
+    private void OnDestroy()
     {
         Time.timeScale = 1;
     }

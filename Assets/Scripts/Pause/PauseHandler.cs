@@ -1,36 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 public class PauseHandler : MonoBehaviour
 {
-    // Update is called once per frame
-    void Update()
+    public InputActionReference pauseAction;
+
+    public GameObject pauseMenuUI;
+
+    public UnityEvent onPaused;
+    public UnityEvent onResumed;
+
+    private bool isPaused;
+
+    void OnEnable()
     {
-        if(Input.GetButtonDown("Pause"))
+        if (pauseAction != null)
         {
-            // if pause menu is open, pressing pause button means we want to unpause
-            if(SceneManager.GetSceneByName("Pause").isLoaded)
-            {
-                UnpauseGame();
-            }
-            // if pause menu is not open, pressing pause button means we want to pause
-            else
-            {
-                PauseGame();
-            }
+            pauseAction.action.Enable();
+            pauseAction.action.performed += OnPausePerformed;
         }
     }
 
-    [ContextMenu("Pause")]
-    public void PauseGame()
+    void OnDisable()
     {
-        SceneManager.LoadScene("Pause", LoadSceneMode.Additive);
+        if (pauseAction != null)
+            pauseAction.action.performed -= OnPausePerformed;
     }
 
-    public void UnpauseGame()
+    private void OnPausePerformed(InputAction.CallbackContext ctx)
     {
-        SceneManager.UnloadSceneAsync("Pause");
+        TogglePause();
+    }
+
+    public void TogglePause()
+    {
+        isPaused = !isPaused;
+        Time.timeScale = isPaused ? 0f : 1f;
+
+        if (pauseMenuUI) pauseMenuUI.SetActive(isPaused);
+        if (isPaused) onPaused?.Invoke(); else onResumed?.Invoke();
+
+        Cursor.visible = isPaused;
+        Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
     }
 }
